@@ -1,24 +1,20 @@
 const express = require('express');
 
+const QuestoesController = require('./controllers/QuestoesController');
+const NiveisDificuldadeController = require('./controllers/NiveisDificuldadeController');
+
 const routes = express.Router();
 
-routes.get('/', (request, response) => {
-    return response.send('Hello World');
-});
+//rota para listar todas as questões
+routes.get('/questoes', QuestoesController.index);
 
-routes.get('/users', (request, response) => {
-    console.log(request.query);
-    return response.send({
-        Nome: 'Júlia Fritegotto'
-    });
-});
+//rota para criar questões
+routes.post('/questoes', QuestoesController.create);
 
-routes.post('/users', (request, response) => {
-    console.log(request.body);
-     return response.send({
-        Nome: 'Júlia Fritegotto'
-    });
-    
-});
+
+routes.post('/niveisDificuldade',NiveisDificuldadeController.create);
+routes.get('/niveisDificuldade',NiveisDificuldadeController.index);
+routes.delete('/niveisDificuldade/:pkNivel', NiveisDificuldadeController.delete);
+
 
 module.exports = routes;
