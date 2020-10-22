@@ -11,6 +11,8 @@ routes.get('/questoes', QuestoesController.index);
 //rota para criar questões
 routes.post('/questoes', QuestoesController.create);
 
+routes.delete('/questoes/:pkQuestao', QuestoesController.delete);
+
 
 routes.post('/niveisDificuldade',NiveisDificuldadeController.create);
 routes.get('/niveisDificuldade',NiveisDificuldadeController.index);
