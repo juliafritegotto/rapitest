@@ -5,14 +5,15 @@ exports.up = function(knex) {
             table.increments('pkQuestao');
 
             table.string('enunciado').notNullable();
-            table.string('alternativas').notNullable();
+            //table.string('alternativas').notNullable();
             table.int('respostaPosicao').notNullable();
             
             table.integer('fkNivel').unsigned();
+            table.integer('fkDisciplina').unsigned();
 
+           table.foreign('fkDisciplina').references('pkDisciplina').inTable('disciplinas');
             table.foreign('fkNivel').references('pkNivel').inTable('niveisDificuldade');
-
-            //table.specificType('alternativas', 'text[]')    
+           
     });
   
 };

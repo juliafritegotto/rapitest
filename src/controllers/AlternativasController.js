@@ -5,8 +5,8 @@ module.exports = {
     async index(request, response, next) {
 
         try {
-            const niveisDificuldade = await connection('niveisDificuldade').select('*');
-            return response.json(niveisDificuldade);
+            const alternativas = await connection('alternativas').select('*');
+            return response.json(alternativas);
 
         } catch (error) {
             next(error);
