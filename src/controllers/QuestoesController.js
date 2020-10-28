@@ -66,7 +66,7 @@ module.exports = {
                         enunciado,
                         respostaPosicao,
                         fkNivel,
-                       fkDisciplina
+                        fkDisciplina
                     });
                     id = pkQuestao;
                     for (let i = 0; i < alternativas.length; i++) {
@@ -90,6 +90,71 @@ module.exports = {
         response.status(201).send("Criado com sucesso =) " + id);
 
     },
+    async update(request, response, next) {
+        try {
+            const { pkQuestao } = request.params;
+            const changes = request.body;
+
+            const count = await connection('questoes').where({ pkQuestao }).update(changes);
+            if (count) {
+                response.status(200).json({ updated: count })
+            } else {
+                response.status(404).json({ message: "Record not found" })
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async updateAll(request, response, next) {
+
+        const { pkQuestao } = request.params;
+        const { enunciado, respostaPosicao, fkNivel, fkDisciplina, alternativas } = request.body;
+
+        /*
+
+           const { pkQuestao } = request.params;
+            const changes = request.body;
+            
+            const count = await connection('questoes').where({ pkQuestao }).update(changes);
+        */
+        let id;
+        try {
+
+
+            await connection.transaction(async (tx) => {
+                try {
+                    const count = await connection("questoes").transacting(tx).where('pkQuestao', pkQuestao).update({
+                        enunciado,
+                        respostaPosicao,
+                        fkNivel,
+                        fkDisciplina
+                    });
+
+                    for (let i = 0; i < alternativas.length; i++) {
+                        const { descricaoAlternativa } = alternativas[i];
+                        const count = await connection("alternativas").transacting(tx).where('pkQuestao', fkQuestao).update({
+                            descricaoAlternativa: alternativas[i]
+
+                        });
+
+                    }
+                    await tx.commit();
+                }
+                catch (e) {
+                    await tx.rollback();
+                    next(e);
+                }
+            });
+
+        } catch (error) {
+            return next(error);
+        }
+        response.status(201).send("Atualizado com sucesso =) ");
+
+    },
+
     async delete(request, response, next) {
         try {
             const { pkQuestao } = request.params;
@@ -97,10 +162,10 @@ module.exports = {
             const questoes = await connection('questoes')
                 .where('pkQuestao', pkQuestao)
                 .select('*')
-                .first();           
+                .first();
 
             await connection('questoes').where('pkQuestao', pkQuestao).delete();
-   
+
             return response.status(204).send();
 
         } catch (error) {

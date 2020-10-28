@@ -35,6 +35,22 @@ module.exports = {
 
 
     },
+    async update(request, response, next) {
+        try {
+            const { pkAssunto } = request.params;
+            const changes = request.body;
+            
+            const count = await connection('assuntos').where({ pkAssunto }).update(changes);
+            if (count) {
+                response.status(200).json({ updated: count })
+            } else {
+                response.status(404).json({ message: "Record not found" })
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
 
     async delete(request, response, next) {
         try {

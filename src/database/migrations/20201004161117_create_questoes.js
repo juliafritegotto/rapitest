@@ -5,7 +5,7 @@ exports.up = function(knex) {
             table.increments('pkQuestao');
 
             table.string('enunciado').notNullable();
-            //table.string('alternativas').notNullable();
+            table.string('alternativas');
             table.int('respostaPosicao').notNullable();
             
             table.integer('fkNivel').unsigned();

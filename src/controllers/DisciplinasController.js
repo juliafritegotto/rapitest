@@ -17,7 +17,7 @@ module.exports = {
 
     async create(request, response, next) {
         try {
-            
+
             const { nomeDisciplina } = request.body;
 
             const [pkDisciplina] = await connection('disciplinas').insert({
@@ -30,6 +30,22 @@ module.exports = {
         }
 
 
+    },
+    async update(request, response, next) {
+        try {
+            const { pkDisciplina } = request.params;
+            const changes = request.body;
+            
+            const count = await connection('disciplinas').where({ pkDisciplina }).update(changes);
+            if (count) {
+                response.status(200).json({ updated: count })
+            } else {
+                response.status(404).json({ message: "Record not found" })
+            }
+
+        } catch (error) {
+            next(error);
+        }
     },
 
     async delete(request, response, next) {
