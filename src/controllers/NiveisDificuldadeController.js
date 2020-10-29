@@ -23,7 +23,7 @@ module.exports = {
             const [pkNivel] = await connection('niveisDificuldade').insert({
                 nomeNivel,
             });
-            return response.json({ pkNivel });
+            return response.status(201).send("Criado com sucesso =) " + pkNivel);
 
         } catch (error) {
             next(error);
@@ -38,9 +38,9 @@ module.exports = {
             
             const count = await connection('niveisDificuldade').where({ pkNivel }).update(changes);
             if (count) {
-                response.status(200).json({ updated: count })
+                response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {
-                response.status(404).json({ message: "Record not found" })
+                response.status(404).send("Registro não encontrado =/");
             }
 
         } catch (error) {
@@ -57,9 +57,14 @@ module.exports = {
                 .select('*');
 
 
-            await connection('niveisDificuldade').where('pkNivel', pkNivel).delete();
+            const count = await connection('niveisDificuldade').where('pkNivel', pkNivel).delete();
 
-            return response.status(204).send("Deletado com sucesso =) " ); 
+            if (count) {
+                response.status(200).send("Deletado com sucesso!  " + count);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+           
 
         } catch (error) {
             next(error);

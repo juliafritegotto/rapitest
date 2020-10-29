@@ -6,9 +6,9 @@ module.exports = {
 
         try {
             const assuntos = await connection('assuntos')
-            .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
-            .select('assuntos.*', 'nomeDisciplina');
-                       
+                .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
+                .select('assuntos.*', 'nomeDisciplina');
+
             return response.json(assuntos);
 
         } catch (error) {
@@ -27,8 +27,7 @@ module.exports = {
                 nomeAssunto,
                 fkDisciplina
             });
-            return response.json({ pkAssunto });
-
+            return response.status(201).send("Criado com sucesso =) " + pkAssunto);
         } catch (error) {
             next(error);
         }
@@ -39,12 +38,13 @@ module.exports = {
         try {
             const { pkAssunto } = request.params;
             const changes = request.body;
-            
+
             const count = await connection('assuntos').where({ pkAssunto }).update(changes);
+            
             if (count) {
-                response.status(200).json({ updated: count })
+                response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {
-                response.status(404).json({ message: "Record not found" })
+                response.status(404).send("Registro não encontrado =/");
             }
 
         } catch (error) {
@@ -61,9 +61,13 @@ module.exports = {
                 .select('*');
 
 
-            await connection('assuntos').where('pkAssunto', pkAssunto).delete();
+            const count = await connection('assuntos').where('pkAssunto', pkAssunto).delete();
 
-            return response.status(204).send(); 
+            if (count) {
+                response.status(200).send("Deletado com sucesso! " + count);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
 
         } catch (error) {
             next(error);

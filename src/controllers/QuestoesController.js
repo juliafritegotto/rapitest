@@ -1,7 +1,7 @@
 const connection = require('../database/connection');
 
 module.exports = {
-    //faz a listagem de todos as questões
+
     async index(request, response, next) {
         try {
 
@@ -39,17 +39,21 @@ module.exports = {
                 .where('pkQuestao', pkQuestao)
                 .select('*')
                 .first();
+            if (questao) {
+                const alternativas = await connection("alternativas")
+                    .where('fkQuestao', pkQuestao)
+                    .select('*');
 
-            const alternativas = await connection("alternativas")
-                .where('fkQuestao', pkQuestao)
-                .select('*');
-
-            questao.alternativas = [];
-            if (alternativas.length) {
-                questao.alternativas = alternativas;
+                questao.alternativas = [];
+                if (alternativas.length) {
+                    questao.alternativas = alternativas;
+                }
+                response.send(questao);
+                
+            } else {
+                response.status(404).send("Registro não encontrado =/");
             }
 
-            response.send(questao);
         } catch (error) {
             return next(error);
         }
@@ -57,37 +61,66 @@ module.exports = {
 
     async create(request, response, next) {
         let id;
-        try {
-            const { enunciado, respostaPosicao, fkNivel, fkDisciplina, alternativas } = request.body;
+        let idAlternativa;
 
-            await connection.transaction(async (tx) => {
-                try {
-                    const [pkQuestao] = await connection("questoes").transacting(tx).insert({
-                        enunciado,
-                        respostaPosicao,
-                        fkNivel,
-                        fkDisciplina
-                    });
-                    id = pkQuestao;
-                    for (let i = 0; i < alternativas.length; i++) {
-                        const { descricaoAlternativa } = alternativas[i];
-                        await connection("alternativas").transacting(tx).insert({
-                            fkQuestao: pkQuestao,
-                            descricaoAlternativa: alternativas[i]
-                        });
-                    }
-                    await tx.commit();
-                }
-                catch (e) {
-                    await tx.rollback();
-                    next(e);
-                }
-            });
+        const { enunciado, respostaPosicao, fkNivel, fkDisciplina, fkAssunto, alternativas } = request.body;
 
-        } catch (error) {
-            return next(error);
+        const pkD = await connection('assuntos')
+            .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
+            .where('pkAssunto', fkAssunto)
+            .select('fkDisciplina');
+
+        if (pkD[0].fkDisciplina !== fkDisciplina) {
+            response.status(500).send("Viola a integridade de chave");
         }
-        response.status(201).send("Criado com sucesso =) " + id);
+
+        else {
+            try {
+
+                await connection.transaction(async (tx) => {
+                    try {
+                        const [pkQuestao] = await connection("questoes").transacting(tx).insert({
+                            enunciado,
+                            respostaPosicao,
+                            fkNivel,
+                            fkDisciplina,
+                            fkAssunto
+                        });
+                        id = pkQuestao;
+
+                        for (let i = 0; i < alternativas.length; i++) {
+                            const { descricaoAlternativa } = alternativas[i];
+                            const alt = await connection("alternativas").transacting(tx).insert({
+                                fkQuestao: pkQuestao,
+                                descricaoAlternativa: alternativas[i]
+                            });
+                            if (i == respostaPosicao) {
+                                idAlternativa = alt;
+                            }
+
+
+                        }
+
+                        await connection("respostas").transacting(tx).insert({
+                            fkQuestao: pkQuestao,
+                            fkAlternativa: idAlternativa
+
+                        });
+                        await tx.commit();
+                    }
+                    catch (e) {
+                        await tx.rollback();
+                        next(e);
+                    }
+                });
+
+            } catch (error) {
+                return next(error);
+            }
+            response.status(201).send("Criado com sucesso =) " + id);
+
+        }
+
 
     },
     async update(request, response, next) {
@@ -97,9 +130,9 @@ module.exports = {
 
             const count = await connection('questoes').where({ pkQuestao }).update(changes);
             if (count) {
-                response.status(200).json({ updated: count })
+                response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {
-                response.status(404).json({ message: "Record not found" })
+                response.status(404).send("Registro não encontrado =/");
             }
 
         } catch (error) {
@@ -110,18 +143,14 @@ module.exports = {
     async updateAll(request, response, next) {
 
         const { pkQuestao } = request.params;
-        const { enunciado, respostaPosicao, fkNivel, fkDisciplina, alternativas } = request.body;
+        const { enunciado, respostaPosicao, fkNivel, fkDisciplina, fkAssunto, alternativas } = request.body;
 
-        /*
+        const pksAlternativa = await connection("alternativas")
+            .where('fkQuestao', pkQuestao)
+            .select('*');
 
-           const { pkQuestao } = request.params;
-            const changes = request.body;
-            
-            const count = await connection('questoes').where({ pkQuestao }).update(changes);
-        */
         let id;
         try {
-
 
             await connection.transaction(async (tx) => {
                 try {
@@ -129,16 +158,17 @@ module.exports = {
                         enunciado,
                         respostaPosicao,
                         fkNivel,
-                        fkDisciplina
+                        fkDisciplina,
+                        fkAssunto
                     });
 
+
                     for (let i = 0; i < alternativas.length; i++) {
+
                         const { descricaoAlternativa } = alternativas[i];
-                        const count = await connection("alternativas").transacting(tx).where('pkQuestao', fkQuestao).update({
-                            descricaoAlternativa: alternativas[i]
-
+                        const count = await connection("alternativas").transacting(tx).where('pkAlternativa', pksAlternativa[i].pkAlternativa).update({
+                            descricaoAlternativa: alternativas[i].descricaoAlternativa
                         });
-
                     }
                     await tx.commit();
                 }
@@ -147,7 +177,6 @@ module.exports = {
                     next(e);
                 }
             });
-
         } catch (error) {
             return next(error);
         }
@@ -164,9 +193,13 @@ module.exports = {
                 .select('*')
                 .first();
 
-            await connection('questoes').where('pkQuestao', pkQuestao).delete();
+            const count = await connection('questoes').where('pkQuestao', pkQuestao).delete();
 
-            return response.status(204).send();
+            if (count) {
+                response.status(200).send("Deletado com sucesso! " + count);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
 
         } catch (error) {
             next(error);

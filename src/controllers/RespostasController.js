@@ -2,11 +2,12 @@ const { select } = require('../database/connection');
 const connection = require('../database/connection');
 
 module.exports = {
-    async index(request, response, next) {
+  
+  async index(request, response, next) {
 
         try {
-            const alternativas = await connection('alternativas').select('*');
-            return response.json(alternativas);
+            const respostas = await connection('respostas').select('*');
+            return response.json(respostas);
 
         } catch (error) {
             next(error);
@@ -14,13 +15,13 @@ module.exports = {
 
 
     },
+
     async update(request, response, next) {
-        
         try {
-            const { pkAlternativa } = request.params;
+            const { pkResposta } = request.params;
             const changes = request.body;
             
-            const count = await connection('alternativas').where({ pkAlternativa }).update(changes);
+            const count = await connection('respostas').where({ pkResposta }).update(changes);
             if (count) {                
                 response.status(200).send("Atualizado com sucesso! =) " + count );
             } else {
@@ -30,8 +31,5 @@ module.exports = {
         } catch (error) {
             next(error);
         }
-    }
-
-
-
-};
+    },
+}
