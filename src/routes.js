@@ -13,7 +13,7 @@ const RespostasController = require('./controllers/RespostasController');
 const routes = express.Router();
 
 //Rotas de Provas
-//routes.get('/provas', ProvasController.index);
+routes.get('/provas', ProvasController.index);
 
 //Rotas de Questões
 routes.get('/questoes', QuestoesController.index);
