@@ -2,68 +2,76 @@ const { select } = require('../database/connection');
 const connection = require('../database/connection');
 const HtmlDocx = require('html-to-docx');
 
+async function getQuestoesDadoParametros(request) {
+    let { nivel, disciplina, assunto, orderBy, pageSize, page } = request.query;
+    orderBy = orderBy || "pkQuestao";
+    pageSize = pageSize || "15";
+    page = page || "1";
+
+    try {
+        const questao = await connection("questoes")
+            .select('*').where(function () {
+                if (nivel && disciplina && assunto) {
+                    this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
+                }
+                else if (nivel && disciplina) {
+                    this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina);
+                }
+                else if (nivel) {
+                    this.where("fkNivel", "=", nivel);
+                }
+                else if (disciplina && assunto) {
+                    this.where("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
+                }
+                else if (disciplina) {
+                    this.where("fkDisciplina", "=", disciplina);
+                }
+            }).paginate({ perPage: pageSize, currentPage: page });
+
+
+        const aPromises = [];
+        for (let i = 0; i < questao.data.length; i++) {
+            const q = questao.data[i];
+
+            aPromises.push(
+                connection("alternativas")
+                    .where('fkQuestao', q.pkQuestao).then(alternativas => {
+                    
+                    q.alternativas = [];
+
+                    if (alternativas.length) {
+                        q.alternativas.push(...alternativas);
+                    }
+                    else {
+                        q.alternativas.push(alternativas);
+                    }
+                })
+            );
+        }
+        await Promise.all(aPromises);
+
+        return questao;
+
+
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
-       
     async index(request, response, next) {
-        let { nivel, disciplina, assunto, orderBy, pageSize, page } = request.query;
-        orderBy = orderBy || "pkQuestao";
-        pageSize = pageSize || "15";
-        page = page || "1";
-
         try {
-            const questao = await connection("questoes")
-                .select('*').where(function () {
-                    if (nivel && disciplina && assunto) {
-                        this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
-                    }
-                    else if (nivel && disciplina) {
-                        this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina);
-                    }
-                    else if (nivel) {
-                        this.where("fkNivel", "=", nivel);
-                    }
-                    else if (disciplina && assunto) {
-                        this.where("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
-                    }
-                    else if (disciplina) {
-                        this.where("fkDisciplina", "=", disciplina);
-                    }
-                }).paginate({ perPage: pageSize, currentPage: page });
-
-
-            const aPromises = [];
-            for (let i = 0; i < questao.data.length; i++) {
-                const q = questao.data[i];
-
-                aPromises.push(
-                    connection("alternativas")
-                        .where('fkQuestao', q.pkQuestao).then(alternativas => {
-                            //salva a fkAlternativa para saber a resposta se embaralhar
-                            //fkAlternativaCerta = 
-                            q.alternativas = [];
-                            
-                            if (alternativas.length) {
-                                q.alternativas.push(...alternativas);
-                            }
-                            else {
-                                q.alternativas.push(alternativas);
-                            }
-                        })
-                );
-            }
-            await Promise.all(aPromises);
-            
-            return questao;
-
-
-        } catch (error) {
-            next(error);
+            const questoes = await getQuestoesDadoParametros(request);
+            response.send(questoes);
+        }
+        catch (e) {
+            next(e);
         }
     },
 
     async indexDoc(request, response, next) {
-        const questao = await module.exports.index(request,response, next);
-             
+        const questao = await getQuestoesDadoParametros(request);
+
         let x = 0;
         let abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
         let z = 0;
@@ -102,7 +110,7 @@ module.exports = {
     }, 
        
     async indexJson(request,response,next){
-        const questao = await module.exports.index(request,response, next);
+        const questao = await getQuestoesDadoParametros(request);
         response.send(questao);
     }
 
