@@ -5,25 +5,25 @@ module.exports = {
     async index(request, response, next) {
 
         try {
-            const niveisDificuldade = await connection('niveisDificuldade').select('*');
-            return response.json(niveisDificuldade);
+            const disciplinas = await connection('disciplinas').select('*');
+            return response.json(disciplinas);
 
         } catch (error) {
             next(error);
         }
 
 
-    },
-  
+    },   
+
     async create(request, response, next) {
         try {
-            
-            const { nomeNivel } = request.body;
 
-            const [pkNivel] = await connection('niveisDificuldade').insert({
-                nomeNivel,
+            const { nomeDisciplina } = request.body;
+
+            const [pkDisciplina] = await connection('disciplinas').insert({
+                nomeDisciplina,
             });
-            return response.status(201).send("Criado com sucesso =) " + pkNivel);
+            response.status(201).send("Criado com sucesso =) " + pkDisciplina);
 
         } catch (error) {
             next(error);
@@ -33,10 +33,10 @@ module.exports = {
     },
     async update(request, response, next) {
         try {
-            const { pkNivel } = request.params;
+            const { pkDisciplina } = request.params;
             const changes = request.body;
-            
-            const count = await connection('niveisDificuldade').where({ pkNivel }).update(changes);
+
+            const count = await connection('disciplinas').where({ pkDisciplina }).update(changes);
             if (count) {
                 response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {
@@ -50,22 +50,21 @@ module.exports = {
 
     async delete(request, response, next) {
         try {
-            const { pkNivel } = request.params;
+            const { pkDisciplina } = request.params;
 
-            const niveisDificuldade = await connection('niveisDificuldade')
-                .where('pkNivel', pkNivel)
+            const disciplinas = await connection('disciplinas')
+                .where('pkDisciplina', pkDisciplina)
                 .select('*');
 
 
-            const count = await connection('niveisDificuldade').where('pkNivel', pkNivel).delete();
+            const count = await connection('disciplinas').where('pkDisciplina', pkDisciplina).delete();
 
             if (count) {
-                response.status(200).send("Deletado com sucesso!  " + count);
+                response.status(200).send("Deletado com sucesso! " + count);
             } else {
                 response.status(404).send("Registro não encontrado =/");
             }
-           
-
+            
         } catch (error) {
             next(error);
         }

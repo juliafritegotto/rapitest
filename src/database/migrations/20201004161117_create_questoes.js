@@ -1,22 +1,26 @@
 
-exports.up = function(knex) {
-    return knex.schema.createTable('questoes', function(table){
+exports.up = function (knex) {
+  return knex.schema.createTable('questoes', function (table) {
 
-            table.increments('pkQuestao');
+    table.increments('pkQuestao');
 
-            table.string('enunciado').notNullable();
-            table.string('alternativas').notNullable();
-            table.int('respostaPosicao').notNullable();
-            
-            table.integer('fkNivel');
+    table.string('enunciado').notNullable();
 
-            table.foreign('fkNivel').references('pkNivel').inTable('niveisDificuldade');
+    table.int('respostaPosicao').notNullable();
 
-            //table.specificType('alternativas', 'text[]')    
-    });
-  
+    table.integer('fkNivel').unsigned();
+    table.integer('fkDisciplina').unsigned().notNullable();
+    table.integer('fkAssunto').unsigned().notNullable();
+
+    table.foreign('fkDisciplina').references('pkDisciplina').inTable('disciplinas');
+    table.foreign('fkNivel').references('pkNivel').inTable('niveisDificuldade');
+    table.foreign('fkAssunto').references('pkAssunto').inTable('assuntos');
+    
+    //table.string('alternativas');
+  });
+
 };
 
-exports.down = function(knex) {
+exports.down = function (knex) {
   knex.schema.dropTable('questoes');
 };
