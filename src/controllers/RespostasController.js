@@ -2,8 +2,8 @@ const { select } = require('../database/connection');
 const connection = require('../database/connection');
 
 module.exports = {
-  
-  async index(request, response, next) {
+
+    async index(request, response, next) {
 
         try {
             const respostas = await connection('respostas').select('*');
@@ -14,18 +14,18 @@ module.exports = {
         }
 
 
-    },
-
+    },  
+  
     async update(request, response, next) {
         try {
             const { pkResposta } = request.params;
             const changes = request.body;
-            
+
             const count = await connection('respostas').where({ pkResposta }).update(changes);
-            if (count) {                
-                response.status(200).send("Atualizado com sucesso! =) " + count );
+            if (count) {
+                response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {
-                response.status(404).send("Registro não encontrado =/" );
+                response.status(404).send("Registro não encontrado =/");
             }
 
         } catch (error) {

@@ -30,34 +30,7 @@ module.exports = {
         } catch (error) {
             next(error);
         }
-    },
-
-    async getOne(request, response, next) {
-        const { pkQuestao } = request.params;
-        try {
-            const questao = await connection("questoes")
-                .where('pkQuestao', pkQuestao)
-                .select('*')
-                .first();
-            if (questao) {
-                const alternativas = await connection("alternativas")
-                    .where('fkQuestao', pkQuestao)
-                    .select('*');
-
-                questao.alternativas = [];
-                if (alternativas.length) {
-                    questao.alternativas = alternativas;
-                }
-                response.send(questao);
-
-            } else {
-                response.status(404).send("Registro não encontrado =/");
-            }
-
-        } catch (error) {
-            return next(error);
-        }
-    },
+    },   
 
     async create(request, response, next) {
         let id;

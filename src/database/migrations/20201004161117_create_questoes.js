@@ -9,8 +9,8 @@ exports.up = function (knex) {
     table.int('respostaPosicao').notNullable();
 
     table.integer('fkNivel').unsigned();
-    table.integer('fkDisciplina').unsigned();
-    table.integer('fkAssunto').unsigned();
+    table.integer('fkDisciplina').unsigned().notNullable();
+    table.integer('fkAssunto').unsigned().notNullable();
 
     table.foreign('fkDisciplina').references('pkDisciplina').inTable('disciplinas');
     table.foreign('fkNivel').references('pkNivel').inTable('niveisDificuldade');

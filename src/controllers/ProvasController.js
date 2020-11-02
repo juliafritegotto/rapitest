@@ -63,8 +63,7 @@ module.exports = {
 
     async indexDoc(request, response, next) {
         const questao = await module.exports.index(request,response, next);
-      
-       console.log(questao);
+             
         let x = 0;
         let abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
         let z = 0;
