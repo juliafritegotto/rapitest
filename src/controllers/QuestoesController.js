@@ -49,7 +49,7 @@ module.exports = {
                     questao.alternativas = alternativas;
                 }
                 response.send(questao);
-                
+
             } else {
                 response.status(404).send("Registro não encontrado =/");
             }
@@ -65,13 +65,15 @@ module.exports = {
 
         const { enunciado, respostaPosicao, fkNivel, fkDisciplina, fkAssunto, alternativas } = request.body;
 
-        const pkD = await connection('assuntos')
-            .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
-            .where('pkAssunto', fkAssunto)
-            .select('fkDisciplina');
+        if (fkAssunto) {
+            const pkD = await connection('assuntos')
+                .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
+                .where('pkAssunto', fkAssunto)
+                .select('fkDisciplina');
 
-        if (pkD[0].fkDisciplina !== fkDisciplina) {
-            response.status(500).send("Viola a integridade de chave");
+            if (pkD[0].fkDisciplina !== fkDisciplina) {
+                response.status(500).send("Viola a integridade de chave");
+            }
         }
 
         else {
@@ -97,10 +99,7 @@ module.exports = {
                             if (i == respostaPosicao) {
                                 idAlternativa = alt;
                             }
-
-
                         }
-
                         await connection("respostas").transacting(tx).insert({
                             fkQuestao: pkQuestao,
                             fkAlternativa: idAlternativa
@@ -118,11 +117,9 @@ module.exports = {
                 return next(error);
             }
             response.status(201).send("Criado com sucesso =) " + id);
-
         }
-
-
     },
+    
     async update(request, response, next) {
         try {
             const { pkQuestao } = request.params;

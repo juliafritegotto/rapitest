@@ -1,37 +1,47 @@
 const { select } = require('../database/connection');
 const connection = require('../database/connection');
-
+const HtmlDocx = require('html-to-docx');
 
 module.exports = {
+       
     async index(request, response, next) {
-        let { nivel, disciplina, orderBy, pageSize, page } = request.query;
+        let { nivel, disciplina, assunto, orderBy, pageSize, page } = request.query;
         orderBy = orderBy || "pkQuestao";
         pageSize = pageSize || "15";
-        page = page || "1";   
+        page = page || "1";
 
         try {
-            const questao = await connection("questoes")            
+            const questao = await connection("questoes")
                 .select('*').where(function () {
-                    if(nivel && disciplina) {
+                    if (nivel && disciplina && assunto) {
+                        this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
+                    }
+                    else if (nivel && disciplina) {
                         this.where("fkNivel", "=", nivel).andWhere("fkDisciplina", "=", disciplina);
                     }
-                    else if(nivel) {
+                    else if (nivel) {
                         this.where("fkNivel", "=", nivel);
                     }
-                    else if(disciplina) {
+                    else if (disciplina && assunto) {
+                        this.where("fkDisciplina", "=", disciplina).andWhere("fkAssunto", "=", assunto);
+                    }
+                    else if (disciplina) {
                         this.where("fkDisciplina", "=", disciplina);
                     }
-                }).paginate({perPage: pageSize, currentPage: page});
-              
-                       
+                }).paginate({ perPage: pageSize, currentPage: page });
+
+
             const aPromises = [];
             for (let i = 0; i < questao.data.length; i++) {
                 const q = questao.data[i];
-                
+
                 aPromises.push(
                     connection("alternativas")
                         .where('fkQuestao', q.pkQuestao).then(alternativas => {
+                            //salva a fkAlternativa para saber a resposta se embaralhar
+                            //fkAlternativaCerta = 
                             q.alternativas = [];
+                            
                             if (alternativas.length) {
                                 q.alternativas.push(...alternativas);
                             }
@@ -42,11 +52,59 @@ module.exports = {
                 );
             }
             await Promise.all(aPromises);
-          
-            response.send(questao);
+            
+            return questao;
+
+
         } catch (error) {
             next(error);
         }
+    },
+
+    async indexDoc(request, response, next) {
+        const questao = await module.exports.index(request,response, next);
+      
+       console.log(questao);
+        let x = 0;
+        let abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+        let z = 0;
+
+        const docx = await HtmlDocx(`<h1> Prova com (${questao.data.length}) questoes</h1>  
+         
+            <p>${questao.data.map(function (q) {
+            let y = -1;
+            x++;
+            return ` 
+            <p> ${x}) ${q.enunciado}</p>                     
+                    ${q.alternativas.map(function (a) {
+                y++;
+                return `<p>${abc[y]}) ${a.descricaoAlternativa}</p>`
+
+            }).join('')} 
+                    </p>               
+                `
+        }).join('')}
+            
+            
+            <div style="page-break-after: always"></div>    
+            <h1> Respostas </h1>
+            <p> ${questao.data.map(function (q) {
+            z++;
+            return `<p><b>${z}) </b> ${abc[q.respostaPosicao]}</p>`
+        }).join(' ')} 
+            </p>           
+            
+            `);
+
+        response.set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessing");
+        response.set("Content-Disposition", "attachment; filename=test.docx");
+
+        response.send(docx);
+    }, 
+       
+    async indexJson(request,response,next){
+        const questao = await module.exports.index(request,response, next);
+        response.send(questao);
     }
 
 };

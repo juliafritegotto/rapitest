@@ -1,6 +1,7 @@
 const express = require('express');
 
 const ProvasController = require('./controllers/ProvasController');
+
 const QuestoesController = require('./controllers/QuestoesController');
 const NiveisDificuldadeController = require('./controllers/NiveisDificuldadeController');
 const DisciplinasController = require('./controllers/DisciplinasController');
@@ -13,7 +14,8 @@ const RespostasController = require('./controllers/RespostasController');
 const routes = express.Router();
 
 //Rotas de Provas
-routes.get('/provas', ProvasController.index);
+routes.get('/provas', ProvasController.indexJson);
+routes.get('/provasDoc', ProvasController.indexDoc);
 
 //Rotas de Questões
 routes.get('/questoes', QuestoesController.index);
