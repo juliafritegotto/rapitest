@@ -30,7 +30,7 @@ module.exports = {
         } catch (error) {
             next(error);
         }
-    },   
+    },
 
     async create(request, response, next) {
         let id;
@@ -38,17 +38,15 @@ module.exports = {
 
         const { enunciado, respostaPosicao, fkNivel, fkDisciplina, fkAssunto, alternativas } = request.body;
 
-        if (fkAssunto) {
-            const pkD = await connection('assuntos')
-                .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
-                .where('pkAssunto', fkAssunto)
-                .select('fkDisciplina');
 
-            if (pkD[0].fkDisciplina !== fkDisciplina) {
-                response.status(500).send("Viola a integridade de chave");
-            }
+        const pkD = await connection('assuntos')
+            .join('disciplinas', 'pkDisciplina', '=', 'assuntos.fkDisciplina')
+            .where('pkAssunto', fkAssunto)
+            .select('fkDisciplina');
+
+        if (pkD[0].fkDisciplina !== fkDisciplina) {
+            response.status(500).send("Viola a integridade de chave");
         }
-
         else {
             try {
 
@@ -92,7 +90,7 @@ module.exports = {
             response.status(201).send("Criado com sucesso =) " + id);
         }
     },
-    
+
     async update(request, response, next) {
         try {
             const { pkQuestao } = request.params;
@@ -119,6 +117,11 @@ module.exports = {
             .where('fkQuestao', pkQuestao)
             .select('*');
 
+        const pksResposta = await connection("respostas")
+            .where('fkQuestao', pkQuestao)
+            .select('pkResposta')
+            .first();
+
         let id;
         try {
 
@@ -132,14 +135,21 @@ module.exports = {
                         fkAssunto
                     });
 
+                    if (alternativas) {
+                        for (let i = 0; i < alternativas.length; i++) {
+                            const { descricaoAlternativa } = alternativas[i];
+                            const count = await connection("alternativas").transacting(tx).where('pkAlternativa', pksAlternativa[i].pkAlternativa).update({
+                                descricaoAlternativa: alternativas[i].descricaoAlternativa
+                            });
+                        }
+                    }
 
-                    for (let i = 0; i < alternativas.length; i++) {
-
-                        const { descricaoAlternativa } = alternativas[i];
-                        const count = await connection("alternativas").transacting(tx).where('pkAlternativa', pksAlternativa[i].pkAlternativa).update({
-                            descricaoAlternativa: alternativas[i].descricaoAlternativa
+                    if (respostaPosicao) {
+                        await connection("respostas").transacting(tx).where('pkResposta', pksResposta.pkResposta).update({
+                            fkAlternativa: pksAlternativa[respostaPosicao].pkAlternativa
                         });
                     }
+
                     await tx.commit();
                 }
                 catch (e) {

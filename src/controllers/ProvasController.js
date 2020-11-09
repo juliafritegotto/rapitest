@@ -104,7 +104,7 @@ module.exports = {
             `);
 
         response.set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessing");
-        response.set("Content-Disposition", "attachment; filename=test.docx");
+        response.set("Content-Disposition", "attachment; filename=prova.docx");
 
         response.send(docx);
     }, 
