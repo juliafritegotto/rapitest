@@ -14,7 +14,24 @@ module.exports = {
 
 
     },
-    
+    async show(request, response, next) {
+        const { pkAlternativa } = request.params;
+        try {
+            const alternativas = await connection('alternativas')
+                .where('pkAlternativa', pkAlternativa)
+                .select('*')
+                .first();
+
+            if (alternativas) {
+                return response.json(alternativas);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
     async update(request, response, next) {
         
         try {

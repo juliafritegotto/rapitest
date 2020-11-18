@@ -17,7 +17,24 @@ module.exports = {
 
 
     },
-   
+    async show(request, response, next) {
+        const { pkAssunto } = request.params;
+        try {
+            const assuntos = await connection('assuntos')
+                .where('pkAssunto', pkAssunto)
+                .select('*')
+                .first();
+
+            if (assuntos) {
+                return response.json(assuntos);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
     async create(request, response, next) {
         try {
 
@@ -40,7 +57,7 @@ module.exports = {
             const changes = request.body;
 
             const count = await connection('assuntos').where({ pkAssunto }).update(changes);
-            
+
             if (count) {
                 response.status(200).send("Atualizado com sucesso! =) " + count);
             } else {

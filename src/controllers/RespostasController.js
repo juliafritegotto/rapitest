@@ -15,7 +15,25 @@ module.exports = {
 
 
     },  
-  
+    async show(request, response, next) {
+        const { pkResposta } = request.params;
+        try {
+            const respostas = await connection('respostas')
+                .where('pkResposta', pkResposta)
+                .select('*')
+                .first();
+
+            if (respostas) {
+                return response.json(respostas);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
+  /*
     async update(request, response, next) {
         try {
             const { pkResposta } = request.params;
@@ -31,5 +49,7 @@ module.exports = {
         } catch (error) {
             next(error);
         }
-    },
+    }, 
+    falta atualização na variavél respostaPosição de questão
+    */
 }

@@ -14,10 +14,27 @@ module.exports = {
 
 
     },
-  
+    async show(request, response, next) {
+        const { pkNivel } = request.params;
+        try {
+            const niveisDificuldade = await connection('niveisDificuldade')
+                .where('pkNivel', pkNivel)
+                .select('*')
+                .first();
+
+            if (niveisDificuldade) {
+                return response.json(niveisDificuldade);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
     async create(request, response, next) {
         try {
-            
+
             const { nomeNivel } = request.body;
 
             const [pkNivel] = await connection('niveisDificuldade').insert({
@@ -35,7 +52,7 @@ module.exports = {
         try {
             const { pkNivel } = request.params;
             const changes = request.body;
-            
+
             const count = await connection('niveisDificuldade').where({ pkNivel }).update(changes);
             if (count) {
                 response.status(200).send("Atualizado com sucesso! =) " + count);
@@ -64,7 +81,7 @@ module.exports = {
             } else {
                 response.status(404).send("Registro não encontrado =/");
             }
-           
+
 
         } catch (error) {
             next(error);

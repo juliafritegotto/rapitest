@@ -13,7 +13,26 @@ module.exports = {
         }
 
 
-    },   
+    },
+
+    async show(request, response, next) {
+        const { pkDisciplina } = request.params;
+        try {
+            const disciplinas = await connection('disciplinas')
+                .where('pkDisciplina', pkDisciplina)
+                .select('*')
+                .first();
+
+            if (disciplinas) {
+                return response.json(disciplinas);
+            } else {
+                response.status(404).send("Registro não encontrado =/");
+            }
+
+        } catch (error) {
+            next(error);
+        }
+    },
 
     async create(request, response, next) {
         try {
@@ -64,7 +83,7 @@ module.exports = {
             } else {
                 response.status(404).send("Registro não encontrado =/");
             }
-            
+
         } catch (error) {
             next(error);
         }
